@@ -223,7 +223,8 @@ h3 {
   padding-top: 104px;
 }
 .prose {
-  max-width: 44rem;
+  max-width: 48rem;
+  margin-inline: auto;
 }
 .prose p {
   margin: 0 0 1.05em;
@@ -263,6 +264,7 @@ mjx-container[display="true"] {
   width: 100%;
   max-width: 560px;
   display: block;
+  margin-inline: auto;
 }
 .diagram .box {
   fill: var(--panel);
@@ -411,6 +413,9 @@ mjx-container[display="true"] {
   grid-template-columns: minmax(0, 1fr);
   max-width: 520px;
 }
+.fig .controls.one {
+  margin-inline: auto;
+}
 .hero-fig .controls {
   border-top: 0;
   padding-top: 0;
@@ -516,6 +521,9 @@ input[type="range"]:focus-visible {
 }
 
 /* papers */
+#papers > .prose {
+  max-width: none;
+}
 .papers {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -590,6 +598,11 @@ input[type="range"]:focus-visible {
     grid-template-columns: 1fr;
     gap: 30px;
     padding-top: 40px;
+  }
+  .hero-text {
+    width: 100%;
+    max-width: 48rem;
+    margin-inline: auto;
   }
   .controls {
     grid-template-columns: 1fr 1fr;
