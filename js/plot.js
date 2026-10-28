@@ -23,7 +23,8 @@
     }
     resize() {
       const w = this.canvas.clientWidth || this.canvas.parentElement.clientWidth || 600;
-      const h = Math.round(w * this.aspect);
+      // wide, short plots get a floor on narrow screens so the curves stay readable
+      const h = Math.round(Math.max(w * this.aspect, Math.min(220, w * 0.7)));
       const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
       this.canvas.style.height = h + "px";
       this.canvas.width = Math.round(w * dpr);

@@ -113,7 +113,7 @@
           <p>
             The standard test is a Lyapunov function that decreases with two powers at once: a power below one that finishes the job near
             the origin, and a power above one that pulls far-away states in quickly. If
-            \[ \dot V \le -c_1 V^{p_1} - c_2 V^{p_2}, \qquad p_1 \in (0,1),\ \ p_2 > 1, \]
+            <span class="eqs"><span>\[ \dot V \le -c_1 V^{p_1} - c_2 V^{p_2}, \]</span><span>\[ p_1 \in (0,1),\ \ p_2 > 1, \]</span></span>
             then the origin is fixed-time stable and
             \[ T(x_0) \le \frac{1}{c_1(1-p_1)} + \frac{1}{c_2(p_2-1)} \quad \text{for every } x_0. \]
           </p>
@@ -192,7 +192,10 @@
               <i>For \(i = 1, 2\) and \(j = 3-i\) there is a locally Lipschitz \(V_i\) with
               \(\underline\alpha_i(|x_i|) \le V_i(x_i) \le \overline\alpha_i(|x_i|)\), gains \(\gamma_i, \chi_i \in \K_\infty\), and
               \(\Psi_i(s) = c_1 s^{p_1} + c_2 s^{p_2}\) with \(p_1 \in (0,1)\), \(p_2 > 1\), such that</i>
-              \[ V_i(x_i) \ge \max\{\gamma_i(V_j(x_j)),\ \chi_i(|u_i|)\} \ \Longrightarrow\ \dot V_i \le -\Psi_i(V_i(x_i)). \]
+              <span class="eqs tight"
+                ><span>\[ V_i(x_i) \ge \max\{\gamma_i(V_j(x_j)),\ \chi_i(|u_i|)\} \]</span
+                ><span>\[ \Longrightarrow\ \ \dot V_i \le -\Psi_i(V_i(x_i)). \]</span></span
+              >
             </p>
           </div>
           <div class="statement theorem">
@@ -231,13 +234,20 @@
         <div class="prose">
           <h2>How much coupling the loop can take</h2>
           <p>Theorem 2 of the ACC paper applies Theorem 1 to two fixed-time systems with polynomial coupling,</p>
-          \[ \dot x = f(x) + \varepsilon_1\big(\sgnp{y}{p} + \sgnp{y}{q}\big), \qquad \dot y = g(y) - \varepsilon_2 \sgnp{x}{r}, \]
+          <span class="eqs"
+            ><span>\[ \dot x = f(x) + \varepsilon_1\big(\sgnp{y}{p} + \sgnp{y}{q}\big), \]</span
+            ><span>\[ \dot y = g(y) - \varepsilon_2 \sgnp{x}{r}, \]</span></span
+          >
           <p>
             with \(f(x) = -x^{1/3} - x^3\) and \(g(y) = -\sgnp{y}{1/2} - \sgnp{y}{2}\). With \(V = x^2\) and \(W = y^2\), the subsystems
             satisfy \(2xf(x) = -2|x|^{4/3} - 2|x|^{4}\) and \(2yg(y) = -2|y|^{3/2} - 2|y|^{3}\), so \(m_1 = m_2 = 1\),
             \(\alpha_2 = 3/4\) and \(\beta_2 = 3/2\). The theorem certifies fixed-time stability when
           </p>
-          \[ pr,\ qr \in [\alpha_2, \beta_2] \qquad \text{and} \qquad 0 < \varepsilon_1^r \varepsilon_2 < \frac{m_1^r m_2}{2^r L_r^{1/2}}, \quad L_r = \max(1, 2^{r-1}). \]
+          <span class="eqs"
+            ><span>\[ pr,\ qr \in [\alpha_2, \beta_2] \]</span
+            ><span>\[ \text{and} \quad 0 < \varepsilon_1^r \varepsilon_2 < \frac{m_1^r m_2}{2^r L_r^{1/2}}, \]</span
+            ><span>\[ L_r = \max(1, 2^{r-1}). \]</span></span
+          >
           <p>
             The exponent window is what replaces the usual requirement \(pr = qr = 1\): exponents only need to sit near one. Below, the
             left plot compares the two gains from the proof, \(\gamma_1(s)\) and \(\gamma_2^{-1}(s)\); the small-gain condition asks the
@@ -336,8 +346,11 @@
             The usual design makes the controller much slower than the plant, so the plant can be treated as already settled. Here the
             controller runs at full speed and reads the measured state \(x\) in place of \(h(u)\):
           </p>
-          \[ \dot u = -\mathcal F_\xi\big(\mathcal G_\theta(x,u)\big), \qquad \mathcal F_\xi(s) = \frac{s}{|s|^{\xi_1}} + \frac{s}{|s|^{\xi_2}},
-             \quad \xi_1 \in (0,1),\ \xi_2 < 0, \]
+          <span class="eqs"
+            ><span>\[ \dot u = -\mathcal F_\xi\big(\mathcal G_\theta(x,u)\big), \]</span
+            ><span>\[ \mathcal F_\xi(s) = \frac{s}{|s|^{\xi_1}} + \frac{s}{|s|^{\xi_2}}, \]</span
+            ><span>\[ \xi_1 \in (0,1),\ \xi_2 < 0, \]</span></span
+          >
           <p>where \(\mathcal G_\theta(x,u) = H(u)^\top \nabla \phi_\theta(x,u)\) is the gradient of the cost along the steady-state map.</p>
           <div class="statement theorem">
             <p>
@@ -386,8 +399,10 @@
             Now several players share one plant. Player \(i\) chooses \(u_i\) and pays \(J_i(x,u)\), which depends on the plant state.
             Each player updates using only its own partial derivative, again with no time-scale separation from the plant:
           </p>
-          \[ \dot u_i = -\mathcal F_\xi\big(\mathcal G_i(x,u)\big), \qquad
-             \mathcal G_i(x,u) = \begin{bmatrix} \tfrac{\partial h(u)}{\partial u_i}^{\!\top} & e_i^\top \end{bmatrix} \nabla J_i(x,u). \]
+          <span class="eqs"
+            ><span>\[ \dot u_i = -\mathcal F_\xi\big(\mathcal G_i(x,u)\big), \]</span
+            ><span>\[ \mathcal G_i(x,u) = \begin{bmatrix} \tfrac{\partial h(u)}{\partial u_i}^{\!\top} & e_i^\top \end{bmatrix} \nabla J_i(x,u). \]</span></span
+          >
           <div class="statement theorem">
             <p>
               <b>Theorem 3.</b>
@@ -468,16 +483,17 @@
               optimization with a constant cost.
             </p>
             <p class="links">
+              <a href="https://ieeexplore.ieee.org/abstract/document/11615748">IEEE Xplore</a>
               <a href="https://arxiv.org/abs/2511.23474">arXiv:2511.23474</a>
               <button class="link copy" type="button" data-copy="bibAcc">Copy BibTeX</button>
             </p>
             <pre id="bibAcc" class="bib">@inproceedings{tang2026smallgain,
-  title     = {A Lyapunov-Based Small-Gain Theorem for Fixed-Time Stability},
+  title     = {A Lyapunov-Based Small-Gain Theorem for
+               Fixed-Time Stability},
   author    = {Tang, Michael and Krstic, Miroslav and Poveda, Jorge I.},
   booktitle = {American Control Conference (ACC)},
   year      = {2026},
-  eprint    = {2511.23474},
-  archivePrefix = {arXiv}
+  url       = {https://ieeexplore.ieee.org/document/11615748}
 }</pre>
           </article>
         </div>

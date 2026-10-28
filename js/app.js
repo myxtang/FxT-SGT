@@ -154,6 +154,13 @@
       pX.line(S.trFin.t, S.trFin.x, { color: c.muted, width: 2, dash: [6, 5] });
       pX.line(S.trFix.t, S.trFix.x, { color: c.ink, width: 2.4 });
       pX.vline(S.bound, { color: c.ink, label: "T*" });
+      // when the slow-only trajectory runs off the right edge, label it with the time it reaches 0
+      if (S.Tfin > pX.o.x.max) {
+        const nearTop = Math.log10(S.x0) > Math.log10(pX.o.y.max) - 1.6;
+        pX.text(0, S.x0, `without it: 0 at t = ${bigSecs(S.Tfin)}`, {
+          color: c.muted, align: "left", baseline: nearTop ? "top" : "bottom", dx: 10, dy: nearTop ? 7 : -7,
+        });
+      }
     }
     const upd = scheduler(() => { compute(); draw(); });
     [sx0, sp, sq].forEach((el) => el.addEventListener("input", upd));

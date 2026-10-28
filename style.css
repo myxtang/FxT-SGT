@@ -238,6 +238,25 @@ mjx-container[display="true"] {
 .prose > mjx-container[display="true"] {
   display: block;
 }
+/* a display equation in pieces: side by side when there is room, stacked on narrow screens */
+.eqs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  column-gap: 2.2em;
+  margin: 1em 0;
+}
+.eqs > span {
+  min-width: 0;
+  max-width: 100%;
+}
+.eqs mjx-container[display="true"] {
+  margin: 0.2em 0 !important;
+}
+.eqs.tight {
+  column-gap: 0.6em;
+}
 
 /* definitions and theorems, set the way a paper sets them */
 .statement {
@@ -574,8 +593,8 @@ input[type="range"]:focus-visible {
   border-radius: 10px;
   color: var(--text);
   font: 400 0.8rem/1.6 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  white-space: pre;
+  overflow-x: auto;
 }
 
 .foot {
@@ -592,6 +611,9 @@ input[type="range"]:focus-visible {
   margin: 0;
   max-width: 44rem;
 }
+.foot p:last-child {
+  white-space: nowrap;
+}
 
 @media (max-width: 980px) {
   .hero {
@@ -607,6 +629,19 @@ input[type="range"]:focus-visible {
   .controls {
     grid-template-columns: 1fr 1fr;
   }
+  .site {
+    display: none;
+  }
+  /* one paper per row, centered with the text, so the BibTeX fits */
+  #papers > .prose,
+  .papers {
+    max-width: 48rem;
+    margin-inline: auto;
+  }
+  .papers {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
 }
 @media (max-width: 760px) {
   .wrap {
@@ -615,14 +650,10 @@ input[type="range"]:focus-visible {
   .top-row {
     gap: 16px;
   }
-  .site {
-    display: none;
-  }
   .block {
     padding-top: 72px;
   }
-  .plots.two,
-  .papers {
+  .plots.two {
     grid-template-columns: 1fr;
   }
   .plots {
@@ -638,6 +669,13 @@ input[type="range"]:focus-visible {
   }
   .lead {
     font-size: 1.1rem;
+  }
+  /* display math a little smaller than the text so long formulas fit phone widths */
+  mjx-container[display="true"] {
+    font-size: 92%;
+  }
+  .bib {
+    font-size: 0.72rem;
   }
   .foot {
     flex-direction: column;
