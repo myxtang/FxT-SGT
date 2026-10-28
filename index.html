@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fixed-Time Small-Gain Theorems | Michael Tang</title>
+    <meta
+      name="description"
+      content="Interactive companion to two papers by Michael Tang, Miroslav Krstic and Jorge I. Poveda on Lyapunov-based small-gain theorems for fixed-time stability and fixed-time ISS, with applications to feedback optimization and Nash seeking."
+    >
+    <meta property="og:title" content="A small-gain theorem for fixed-time stability">
+    <meta property="og:description" content="Run the papers' examples in your browser: coupled fixed-time systems, feedback optimization without time-scale separation, and Nash seeking with a plant in the loop.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://myxtang.com/FxT-SGT/">
+    <meta property="og:image" content="https://myxtang.com/FxT-SGT/assets/preview.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#0b1018">
+    <link rel="canonical" href="https://myxtang.com/FxT-SGT/">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&display=swap"
+    >
+    <link rel="stylesheet" href="style.css">
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["\\(", "\\)"]],
+          displayMath: [["\\[", "\\]"]],
+          macros: {
+            R: "\\mathbb{R}",
+            K: "\\mathcal{K}",
+            KL: "\\mathcal{KL}",
+            sgnp: ["\\lfloor #1 \\rceil^{#2}", 2],
+          },
+        },
+        options: { enableMenu: false },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="top">
+      <div class="wrap top-row">
+        <a class="home" href="#main">Fixed-time small-gain</a>
+        <nav aria-label="Sections">
+          <a href="#fixed-time">Fixed time</a>
+          <a href="#theorem">The theorem</a>
+          <a href="#coupling">Coupling</a>
+          <a href="#inputs">Inputs</a>
+          <a href="#optimization">Optimization</a>
+          <a href="#games">Games</a>
+          <a href="#papers">Papers</a>
+        </nav>
+        <a class="site" href="https://myxtang.com/">myxtang.com</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ============================================================ hero -->
+      <section class="hero wrap" aria-labelledby="title">
+        <div class="hero-text">
+          <h1 id="title">A small-gain theorem for fixed-time stability</h1>
+          <p class="lead">
+            Couple two systems that each reach their equilibrium within a fixed time, wherever they start. If the loop gain is small
+            enough, the coupled system keeps that guarantee. This page runs the examples from the papers in your browser.
+          </p>
+          <p class="authors">
+            <a href="https://myxtang.com/">Michael Tang</a>, <a href="https://flyingv.ucsd.edu/">Miroslav Krstic</a>,
+            <a href="https://poveda.ucsd.edu/">Jorge I. Poveda</a>
+            <span>University of California, San Diego</span>
+          </p>
+          <p class="actions">
+            <a class="btn primary" href="https://doi.org/10.1109/TAC.2026.3738248">Journal paper (IEEE TAC)</a>
+            <a class="btn" href="https://arxiv.org/abs/2512.21314">arXiv</a>
+            <a class="btn" href="https://arxiv.org/abs/2511.23474">ACC 2026 paper</a>
+          </p>
+        </div>
+        <figure class="hero-fig">
+          <canvas id="heroPlot" role="img" aria-label="Log-scale plot of the distance to the origin over time for eight starting points. Every curve drops to zero before the same time."></canvas>
+          <div class="controls one">
+            <div class="ctl">
+              <label for="heroRange">Farthest starting point <output id="heroOut"></output></label>
+              <input type="range" id="heroRange" min="0" max="8" step="0.5" value="8">
+            </div>
+          </div>
+          <figcaption>
+            Distance to the origin, \(|(x,y)|\), for example (19) of the journal paper with no input, started at eight points between 0.1
+            and the slider value. <strong id="heroReadout" aria-live="polite"></strong>
+          </figcaption>
+        </figure>
+      </section>
+
+      <!-- ============================================================ fixed time -->
+      <section id="fixed-time" class="block wrap">
+        <div class="prose">
+          <h2>Fixed time: one deadline for every starting point</h2>
+          <p>
+            A finite-time stable system reaches its equilibrium in finite time, but that time can grow without bound as the starting point
+            moves away. A fixed-time stable system has a single deadline that works for every starting point.
+          </p>
+          <div class="statement">
+            <p>
+              <b>Definition</b> (fixed-time stability)<b>.</b>
+              <i>The origin of \(\dot x = f(x)\) is fixed-time stable if there is \(\beta \in \KL_{\mathrm{FxT}}\) such that every solution
+              satisfies \(|x(t)| \le \beta(|x_0|, t)\) for all \(t \ge 0\), where \(\beta(r,t) = 0\) once \(t \ge T(r)\) and the settling time
+              \(T\) is uniformly bounded.</i>
+            </p>
+          </div>
+          <p>
+            The standard test is a Lyapunov function that decreases with two powers at once: a power below one that finishes the job near
+            the origin, and a power above one that pulls far-away states in quickly. If
+            \[ \dot V \le -c_1 V^{p_1} - c_2 V^{p_2}, \qquad p_1 \in (0,1),\ \ p_2 > 1, \]
+            then the origin is fixed-time stable and
+            \[ T(x_0) \le \frac{1}{c_1(1-p_1)} + \frac{1}{c_2(p_2-1)} \quad \text{for every } x_0. \]
+          </p>
+          <p>
+            Try it on the scalar system \(\dot x = -\sgnp{x}{p} - \sgnp{x}{q}\), where \(\sgnp{x}{a} = |x|^a \operatorname{sgn}(x)\).
+            Without the second term it is only finite-time stable.
+          </p>
+        </div>
+        <figure class="fig" id="demoScalar">
+          <div class="plots two">
+            <div>
+              <p class="plot-title">Settling time against starting point</p>
+              <canvas id="scalarT" role="img" aria-label="Settling time as a function of the starting point, with and without the fast term, and the fixed-time bound."></canvas>
+            </div>
+            <div>
+              <p class="plot-title">Trajectory from the chosen start</p>
+              <canvas id="scalarX" role="img" aria-label="The state over time from the chosen starting point, with and without the fast term."></canvas>
+            </div>
+          </div>
+          <div class="legend">
+            <span class="key ink">With the fast term \(-\sgnp{x}{q}\)</span>
+            <span class="key muted dashed">Without it</span>
+            <span class="key bound">Fixed-time bound</span>
+          </div>
+          <div class="controls">
+            <div class="ctl">
+              <label for="sx0">Starting point \(x_0\) <output id="sx0Out"></output></label>
+              <input type="range" id="sx0" min="-2" max="9" step="0.1" value="6">
+            </div>
+            <div class="ctl">
+              <label for="sp">Slow power \(p\) <output id="spOut"></output></label>
+              <input type="range" id="sp" min="0.1" max="0.9" step="0.05" value="0.5">
+            </div>
+            <div class="ctl">
+              <label for="sq">Fast power \(q\) <output id="sqOut"></output></label>
+              <input type="range" id="sq" min="1.2" max="3" step="0.1" value="2">
+            </div>
+          </div>
+          <p class="readout" id="scalarReadout" aria-live="polite"></p>
+        </figure>
+      </section>
+
+      <!-- ============================================================ theorem -->
+      <section id="theorem" class="block wrap">
+        <div class="prose">
+          <h2>Two fixed-time systems in a loop</h2>
+          <p>The papers study the interconnection</p>
+          <figure class="diagram" aria-label="Block diagram: subsystem 1 receives x2 and input u1; subsystem 2 receives x1 and input u2.">
+            <svg viewBox="0 0 560 210" role="img">
+              <defs>
+                <marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah s1" /></marker>
+                <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah s2" /></marker>
+                <marker id="ahm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah m" /></marker>
+              </defs>
+              <rect x="160" y="22" width="240" height="56" rx="8" class="box s1" />
+              <text x="280" y="56" class="eq">ẋ₁ = f₁(x₁, x₂, u₁)</text>
+              <rect x="160" y="132" width="240" height="56" rx="8" class="box s2" />
+              <text x="280" y="166" class="eq">ẋ₂ = f₂(x₁, x₂, u₂)</text>
+              <path d="M400 50 H470 V150 H404" class="wire s1" marker-end="url(#ah1)" />
+              <text x="480" y="104" class="lbl s1">x₁</text>
+              <path d="M160 160 H90 V58 H156" class="wire s2" marker-end="url(#ah2)" />
+              <text x="66" y="104" class="lbl s2">x₂</text>
+              <path d="M20 36 H156" class="wire m" marker-end="url(#ahm)" />
+              <text x="26" y="26" class="lbl m">u₁</text>
+              <path d="M540 174 H404" class="wire m" marker-end="url(#ahm)" />
+              <text x="520" y="196" class="lbl m">u₂</text>
+            </svg>
+          </figure>
+          <p>
+            Each subsystem treats the other's state as an input, alongside its own external input \(u_i\). The only requirement on the
+            parts is that each one is fixed-time input-to-state stable on its own:
+          </p>
+          <div class="statement">
+            <p>
+              <b>Assumption 1.</b>
+              <i>For \(i = 1, 2\) and \(j = 3-i\) there is a locally Lipschitz \(V_i\) with
+              \(\underline\alpha_i(|x_i|) \le V_i(x_i) \le \overline\alpha_i(|x_i|)\), gains \(\gamma_i, \chi_i \in \K_\infty\), and
+              \(\Psi_i(s) = c_1 s^{p_1} + c_2 s^{p_2}\) with \(p_1 \in (0,1)\), \(p_2 > 1\), such that</i>
+              \[ V_i(x_i) \ge \max\{\gamma_i(V_j(x_j)),\ \chi_i(|u_i|)\} \ \Longrightarrow\ \dot V_i \le -\Psi_i(V_i(x_i)). \]
+            </p>
+          </div>
+          <div class="statement theorem">
+            <p>
+              <b>Theorem 1</b> (fixed-time ISS small-gain theorem)<b>.</b>
+              <i>Let Assumption 1 hold, and suppose there are gains \(\hat\gamma_i \in \K^{P}_\infty \cup \K^{-P}_\infty\) with
+              \(\hat\gamma_i(s) \ge \gamma_i(s)\) such that</i>
+              \[ \hat\gamma_1 \circ \hat\gamma_2(s) < s \quad \text{for all } s > 0. \]
+              <i>Then the origin of the interconnection is fixed-time input-to-state stable.</i>
+            </p>
+          </div>
+          <p>
+            Here \(\K^P_\infty\) is the class of sums of powers \(\sum_i c_i s^{p_i}\), and \(\K^{-P}_\infty\) the class of their inverses.
+            Fixed-time input-to-state stability means \(|x(t)| \le \beta(|x_0|,t) + \varrho(|u|_\infty)\) with \(\beta \in \KL_{\mathrm{FxT}}\):
+            after a fixed time, the state is bounded by a gain of the input alone. With \(u \equiv 0\) this is fixed-time stability, which
+            is the result of the ACC 2026 paper.
+          </p>
+          <p>
+            The proof builds one Lyapunov function for the whole loop,
+            \[ V(x) = \max\{V_{11}(x_1),\ V_{22}(x_2),\ V_{21}(x_2),\ V_{12}(x_1)\}, \]
+            where each \(V_{ij}\) is a subsystem's Lyapunov function rescaled through the gains and the power \(\sigma_\lambda(s) = s^\lambda\).
+            For \(\lambda\) large enough every rescaled piece is still a fixed-time ISS Lyapunov function, so whichever piece is active in the
+            maximum decreases at a fixed-time rate.
+          </p>
+          <p>
+            <b>Why the inverse gains matter.</b> If both gains are sums of powers with different exponents, \(\hat\gamma_1 \circ
+            \hat\gamma_2(s) < s\) must fail either as \(s \to 0\) or as \(s \to \infty\). Allowing one gain to be the inverse of a power sum
+            turns the condition into \(\hat\gamma_1(s) < \hat\gamma_2^{-1}(s)\): a comparison of two power sums, which can hold for every
+            \(s\). The next example shows this comparison at work.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============================================================ coupling -->
+      <section id="coupling" class="block wrap">
+        <div class="prose">
+          <h2>How much coupling the loop can take</h2>
+          <p>Theorem 2 of the ACC paper applies Theorem 1 to two fixed-time systems with polynomial coupling,</p>
+          \[ \dot x = f(x) + \varepsilon_1\big(\sgnp{y}{p} + \sgnp{y}{q}\big), \qquad \dot y = g(y) - \varepsilon_2 \sgnp{x}{r}, \]
+          <p>
+            with \(f(x) = -x^{1/3} - x^3\) and \(g(y) = -\sgnp{y}{1/2} - \sgnp{y}{2}\). With \(V = x^2\) and \(W = y^2\), the subsystems
+            satisfy \(2xf(x) = -2|x|^{4/3} - 2|x|^{4}\) and \(2yg(y) = -2|y|^{3/2} - 2|y|^{3}\), so \(m_1 = m_2 = 1\),
+            \(\alpha_2 = 3/4\) and \(\beta_2 = 3/2\). The theorem certifies fixed-time stability when
+          </p>
+          \[ pr,\ qr \in [\alpha_2, \beta_2] \qquad \text{and} \qquad 0 < \varepsilon_1^r \varepsilon_2 < \frac{m_1^r m_2}{2^r L_r^{1/2}}, \quad L_r = \max(1, 2^{r-1}). \]
+          <p>
+            The exponent window is what replaces the usual requirement \(pr = qr = 1\): exponents only need to sit near one. Below, the
+            left plot compares the two gains from the proof, \(\gamma_1(s)\) and \(\gamma_2^{-1}(s)\); the small-gain condition asks the
+            blue curve to stay under the amber one for every \(s\). The exponents \(p = 2\) and \(q = 2.5\) are fixed as in the paper.
+          </p>
+        </div>
+        <figure class="fig" id="demoCoupling">
+          <div class="plots two">
+            <div>
+              <p class="plot-title">The two gains, log–log</p>
+              <canvas id="gainPlot" role="img" aria-label="Log-log plot of gamma 1 and the inverse of gamma 2; regions where gamma 1 is larger are shaded red."></canvas>
+            </div>
+            <div>
+              <p class="plot-title">Distance to the origin, six starts</p>
+              <canvas id="couplingPlot" role="img" aria-label="Log-scale plot of the distance to the origin over time for six starting points."></canvas>
+            </div>
+          </div>
+          <div class="legend">
+            <span class="key s1">\(\gamma_1(s)\), subsystem \(x\)</span>
+            <span class="key s2">\(\gamma_2^{-1}(s)\), subsystem \(y\)</span>
+            <span class="key bad">Condition fails</span>
+          </div>
+          <div class="controls">
+            <div class="ctl">
+              <label for="ce1">Coupling into \(x\): \(\varepsilon_1\) <output id="ce1Out"></output></label>
+              <input type="range" id="ce1" min="0.02" max="3" step="0.02" value="0.3">
+            </div>
+            <div class="ctl">
+              <label for="ce2">Coupling into \(y\): \(\varepsilon_2\) <output id="ce2Out"></output></label>
+              <input type="range" id="ce2" min="0.02" max="3" step="0.02" value="0.1">
+            </div>
+            <div class="ctl">
+              <label for="cr">Exponent \(r\) <output id="crOut"></output></label>
+              <input type="range" id="cr" min="0.2" max="1" step="0.01" value="0.44">
+            </div>
+          </div>
+          <ul class="checks" id="couplingChecks" aria-live="polite"></ul>
+          <p class="fig-actions"><button class="btn small" id="couplingReset" type="button">Reset to the paper's values</button></p>
+          <p class="note">
+            The theorem gives a sufficient condition. When it fails, the simulation may still converge; the certificate simply no longer
+            applies.
+          </p>
+        </figure>
+      </section>
+
+      <!-- ============================================================ inputs -->
+      <section id="inputs" class="block wrap">
+        <div class="prose">
+          <h2>With inputs, the state settles into a band set by the input</h2>
+          <p>Example (19) of the journal paper adds external inputs to a system with several coupling terms:</p>
+          \[
+            \begin{aligned}
+              \dot x &= -x^{1/3} - x^3 + 0.1\big(\sgnp{y}{2} + \sgnp{y}{2.5}\big) + u_1(t), \\
+              \dot y &= -\sgnp{y}{1/2} - \sgnp{y}{9/4} - 0.3\sgnp{x}{4/9} + 0.2\sgnp{x}{5/8} + u_2(t),
+            \end{aligned}
+          \]
+          <p>
+            with \(u_1(t) = \sin(1.7t) + \tfrac12\sin(5.1t)\) and \(u_2(t) = \tfrac45\cos(2.3t) + 0.35\sin(6.7t)\). It meets the
+            exponent conditions of Proposition 1 in the paper: every product of a coupling exponent from one equation with one from the
+            other, \(\eta_{1,i}\eta_{2,j} \in \{0.89, 1.11, 1.25, 1.56\}\), lies in \([p_2, q_2] = [3/4, 13/8]\), so the proposition guarantees
+            fixed-time ISS once the couplings are small enough. Scale the inputs to see the guarantee: whatever the starting point, after a fixed time the state stays in a band whose
+            size depends only on the input.
+          </p>
+        </div>
+        <figure class="fig" id="demoInputs">
+          <div class="plots one">
+            <div>
+              <p class="plot-title">Distance to the origin, six starts from 0.1 to \(10^4\)</p>
+              <canvas id="inputsPlot" role="img" aria-label="Log-scale plot of the distance to the origin over time for six starting points, with the input magnitude shown dashed."></canvas>
+            </div>
+          </div>
+          <div class="legend">
+            <span class="key ink">\(|(x(t), y(t))|\)</span>
+            <span class="key muted dashed">Input size \(|u(t)|\)</span>
+          </div>
+          <div class="controls one">
+            <div class="ctl">
+              <label for="ik">Input size, relative to the paper <output id="ikOut"></output></label>
+              <input type="range" id="ik" min="0" max="2" step="0.05" value="1">
+            </div>
+          </div>
+          <p class="readout" id="inputsReadout" aria-live="polite"></p>
+        </figure>
+      </section>
+
+      <!-- ============================================================ optimization -->
+      <section id="optimization" class="block wrap">
+        <div class="prose">
+          <h2>Feedback optimization without separating time scales</h2>
+          <p>
+            A plant \(\dot x = f(x,u)\) settles at \(x = h(u)\) for each constant input. The goal is to steer it to the minimizer of a cost
+            \(\phi_\theta(x,u)\) that drifts over time, \(\dot\theta = \varepsilon_0 \Pi(\theta)\). Substituting the steady state gives
+            the target \(\varphi(\theta) = \arg\min_u \phi_\theta(h(u), u)\).
+          </p>
+          <p>
+            The usual design makes the controller much slower than the plant, so the plant can be treated as already settled. Here the
+            controller runs at full speed and reads the measured state \(x\) in place of \(h(u)\):
+          </p>
+          \[ \dot u = -\mathcal F_\xi\big(\mathcal G_\theta(x,u)\big), \qquad \mathcal F_\xi(s) = \frac{s}{|s|^{\xi_1}} + \frac{s}{|s|^{\xi_2}},
+             \quad \xi_1 \in (0,1),\ \xi_2 < 0, \]
+          <p>where \(\mathcal G_\theta(x,u) = H(u)^\top \nabla \phi_\theta(x,u)\) is the gradient of the cost along the steady-state map.</p>
+          <div class="statement theorem">
+            <p>
+              <b>Theorem 2.</b>
+              <i>Under Assumptions 3–6, if \(\mu > K(\ell + \gamma)\), the closed loop is fixed-time ISS with respect to \(\varepsilon_0
+              \Pi(\theta)\): after a fixed time, the distance to \((h(\varphi(\theta)), \varphi(\theta))\) is bounded by a gain of how fast
+              the cost moves.</i>
+            </p>
+          </div>
+          <p>
+            Here \(\mu\) is the strong convexity of the reduced cost, \(K\) bounds how much the plant state perturbs the gradient, and
+            \(\ell\) and \(\gamma\) describe the plant. In the paper's example (section IV-C), \(\ell = 1.1\), \(\gamma = 7/5\),
+            \(K = 1.339\) and \(\mu = 3.37 > K(\ell + \gamma) = 3.35\). The slider sets \(\varepsilon_0\); the paper shows 0, 0.3 and 2.
+          </p>
+        </div>
+        <figure class="fig" id="demoOpt">
+          <div class="plots two">
+            <div>
+              <p class="plot-title">Tracking error \(|x - h(\varphi(\theta(t)))|\)</p>
+              <canvas id="optErr" role="img" aria-label="Log-scale plot of the tracking error for five starting points."></canvas>
+            </div>
+            <div>
+              <p class="plot-title">The moving optimizer and the input</p>
+              <canvas id="optTrack" role="img" aria-label="The two components of the optimizer over time, solid, and of the input of one trajectory, dashed."></canvas>
+            </div>
+          </div>
+          <div class="legend">
+            <span class="key s1">\(\varphi_1\) solid, \(u_1\) dashed</span>
+            <span class="key s2">\(\varphi_2\) solid, \(u_2\) dashed</span>
+          </div>
+          <div class="controls one">
+            <div class="ctl">
+              <label for="oe">How fast the cost changes: \(\varepsilon_0\) <output id="oeOut"></output></label>
+              <input type="range" id="oe" min="0" max="2" step="0.05" value="0.3">
+            </div>
+          </div>
+          <p class="readout" id="optReadout" aria-live="polite"></p>
+        </figure>
+      </section>
+
+      <!-- ============================================================ games -->
+      <section id="games" class="block wrap">
+        <div class="prose">
+          <h2>Nash seeking with a plant in the loop</h2>
+          <p>
+            Now several players share one plant. Player \(i\) chooses \(u_i\) and pays \(J_i(x,u)\), which depends on the plant state.
+            Each player updates using only its own partial derivative, again with no time-scale separation from the plant:
+          </p>
+          \[ \dot u_i = -\mathcal F_\xi\big(\mathcal G_i(x,u)\big), \qquad
+             \mathcal G_i(x,u) = \begin{bmatrix} \tfrac{\partial h(u)}{\partial u_i}^{\!\top} & e_i^\top \end{bmatrix} \nabla J_i(x,u). \]
+          <div class="statement theorem">
+            <p>
+              <b>Theorem 3.</b>
+              <i>For a potential game satisfying Assumptions 7 and 8, if \(\mu > \sqrt N\, K(\ell + \gamma)\), the Nash equilibrium
+              \((h(u^*), u^*)\) is fixed-time stable for the closed loop.</i>
+            </p>
+          </div>
+          <p>
+            The bound grows with \(\sqrt N\): with more players, the curvature of the game has to outweigh the plant's influence by
+            more. In the paper's
+            two-player example (section V-B), \(\mu = 2.605 > \sqrt2\, K(\ell+\gamma) = 1.80\). The shading below is the potential function
+            the players jointly descend, and the star is the Nash equilibrium.
+          </p>
+        </div>
+        <figure class="fig" id="demoGame">
+          <div class="plots two">
+            <div>
+              <p class="plot-title">Actions \((u_1, u_2)\)</p>
+              <canvas id="gamePlane" role="img" aria-label="The players' actions moving across the potential function to the Nash equilibrium."></canvas>
+            </div>
+            <div>
+              <p class="plot-title">Each player's distance to equilibrium</p>
+              <canvas id="gameErr" role="img" aria-label="Log-scale plot of each player's distance to its equilibrium action over time."></canvas>
+            </div>
+          </div>
+          <div class="legend">
+            <span class="key s1">Player 1, \(|u_1 - u_1^*|\)</span>
+            <span class="key s2">Player 2, \(|u_2 - u_2^*|\)</span>
+            <span class="key star">Nash equilibrium \(u^*\)</span>
+          </div>
+          <div class="controls">
+            <div class="ctl">
+              <label for="gd">Starting distance <output id="gdOut"></output></label>
+              <input type="range" id="gd" min="-1" max="4" step="0.5" value="0">
+            </div>
+            <div class="ctl button-ctl">
+              <button class="btn small" id="gameNew" type="button">New starting points</button>
+            </div>
+          </div>
+          <p class="readout" id="gameReadout" aria-live="polite"></p>
+        </figure>
+      </section>
+
+      <!-- ============================================================ papers -->
+      <section id="papers" class="block wrap">
+        <div class="prose">
+          <h2>The papers</h2>
+        </div>
+        <div class="papers">
+          <article class="paper">
+            <p class="venue">IEEE Transactions on Automatic Control, 2027</p>
+            <h3>A Lyapunov-Based Small-Gain Theorem for Fixed-Time ISS: Theory, Optimization, and Games</h3>
+            <p class="by">Michael Tang, Miroslav Krstic, Jorge I. Poveda</p>
+            <p class="what">
+              The fixed-time ISS small-gain theorem with external inputs, feedback optimization with time-varying costs, and Nash seeking
+              with dynamic plants, with complete proofs.
+            </p>
+            <p class="links">
+              <a href="https://doi.org/10.1109/TAC.2026.3738248">IEEE Xplore</a>
+              <a href="https://arxiv.org/abs/2512.21314">arXiv:2512.21314</a>
+              <button class="link copy" type="button" data-copy="bibTac">Copy BibTeX</button>
+            </p>
+            <pre id="bibTac" class="bib">@article{tang2027smallgain,
+  title   = {A Lyapunov-Based Small-Gain Theorem for Fixed-Time {ISS}:
+             Theory, Optimization, and Games},
+  author  = {Tang, Michael and Krstic, Miroslav and Poveda, Jorge I.},
+  journal = {IEEE Transactions on Automatic Control},
+  year    = {2027},
+  doi     = {10.1109/TAC.2026.3738248}
+}</pre>
+          </article>
+          <article class="paper">
+            <p class="venue">American Control Conference, 2026. Best Student Paper Award</p>
+            <h3>A Lyapunov-Based Small-Gain Theorem for Fixed-Time Stability</h3>
+            <p class="by">Michael Tang, Miroslav Krstic, Jorge I. Poveda</p>
+            <p class="what">
+              The small-gain theorem for fixed-time stability without inputs, the coupling example above, and fixed-time feedback
+              optimization with a constant cost.
+            </p>
+            <p class="links">
+              <a href="https://arxiv.org/abs/2511.23474">arXiv:2511.23474</a>
+              <button class="link copy" type="button" data-copy="bibAcc">Copy BibTeX</button>
+            </p>
+            <pre id="bibAcc" class="bib">@inproceedings{tang2026smallgain,
+  title     = {A Lyapunov-Based Small-Gain Theorem for Fixed-Time Stability},
+  author    = {Tang, Michael and Krstic, Miroslav and Poveda, Jorge I.},
+  booktitle = {American Control Conference (ACC)},
+  year      = {2026},
+  eprint    = {2511.23474},
+  archivePrefix = {arXiv}
+}</pre>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="wrap foot">
+      <p>
+        The simulations run in your browser with an implicit (Rosenbrock) solver. Curves below \(10^{-12}\) are drawn on the axis. See the
+        papers for complete assumptions and proofs.
+      </p>
+      <p><a href="https://myxtang.com/">Michael Tang</a>, UC San Diego</p>
+    </footer>
+
+    <script src="js/sim.js"></script>
+    <script src="js/plot.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
